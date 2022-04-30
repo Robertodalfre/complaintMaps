@@ -37,16 +37,30 @@ const center = {
 };
 
 export default function App() {
+
+//  let state = {
+//     region: {
+//       latitude: 37.78825,
+//       longitude: -122.4324,
+//       latitudeDelta: 0.0922,
+//       longitudeDelta: 0.0421,
+//     }
+// }
+
+
+
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
     libraries,
   });
+
   const [markers, setMarkers] = React.useState([]);
   const [selected, setSelected] = React.useState(null);
 
   const onMapClick = React.useCallback((e) => {
-    setMarkers((current) => [
-      ...current,
+
+  setMarkers((current) => [
+     // ...current,
       {
         lat: e.latLng.lat(),
         lng: e.latLng.lng(),
@@ -55,15 +69,58 @@ export default function App() {
     ]);
   }, []);
 
+  const onMarkerDragEnd = React.useCallback((e) => {
+
+    setMarkers((current) => [
+       // ...current,
+        {
+          lat: e.latLng.lat(),
+          lng: e.latLng.lng(),
+          time: new Date(),
+        },
+      ]);
+    }, []);
+
+
+//  const onMarkerDragEnd = (coord) => {
+//     let newRegion = {
+//       latitude: parseFloat(coord.lat),
+//       longitude: parseFloat(coord.lng),
+//       latitudeDelta: 0.0522,
+//       longitudeDelta: 0.0321,
+//     };
+//     setMarkers({
+//       locale: newRegion,
+//     });
+//   };
+
+  // const onMarkerEnd = React.useCallback((e) => {
+  //   console.log("marker", e);  
+
+  // setMarkers((current) => [
+  //     ...current,
+  //     {
+  //       lat: e.latLng.lat(),
+  //       lng: e.latLng.lng(),
+  //       time: new Date(),
+  //     },
+  //   ]);
+  // }, []);
+
+
   const mapRef = React.useRef();
+
   const onMapLoad = React.useCallback((map) => {
     mapRef.current = map;
   }, []);
 
   const panTo = React.useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
-    mapRef.current.setZoom(14);
+    mapRef.current.setZoom(18);
   }, []);
+
+
+  
 
   if (loadError) return "Error";
   if (!isLoaded) return "Loading...";
@@ -83,22 +140,28 @@ export default function App() {
       <GoogleMap
         id="map"
         mapContainerStyle={mapContainerStyle}
-        zoom={8}
+        zoom={11}
         center={center}
         options={options}
         onClick={onMapClick}
         onLoad={onMapLoad}
  
       >
-        {markers.map((marker) => (
+        {markers.map((marker) => (          
           <Marker
-          //onDrag={true}
-           draggable={true}
+            draggable={true}
+            onDragEnd={(e) => {console.log(e); onMarkerDragEnd(e)}}
             key={`${marker.lat}-${marker.lng}`}
             position={{ lat: marker.lat, lng: marker.lng }}
             onClick={() => {
+              console.log("marker", marker);
               setSelected(marker);
             }}
+            // onPositionChanged={() => {  
+            //   let lat = marker.lat;
+            //   let lng = marker.lng;       
+            //   panTo({ lat, lng });
+            // }}
             icon={{
               url: `/denuncia_.svg`,
               origin: new window.google.maps.Point(0, 0),
@@ -114,6 +177,7 @@ export default function App() {
             onCloseClick={() => {
               setSelected(null);
             }}
+            onPositionChanged={{ lat: selected.lat, lng: selected.lng }}
           >
             <div>
               <h2>
@@ -125,29 +189,34 @@ export default function App() {
               <p>Identificação {formatRelative(selected.time, new Date())}</p>
               <form >
 
-          <br/>
-          <label htmlFor="name">Descrição</label>
-          <textarea  className="input" type="textarea" id="descricao" name="descricao" placeholder="Descreva em poucas palavras a ocorrência" />
-          <br/>
+<br/>
+<label htmlFor="name">Descrição</label>
+<textarea  className="input" type="textarea" id="descricao" name="descricao" placeholder="Descreva em poucas palavras a ocorrência" />
+<br/>  
 
-          <label htmlFor="labelproblema">Selecione um Item para Denúncia</label>
-          <br/>
-          <select  className="select" >
-          <option  selected value="1">Desmatamento/Extração Irregular</option>
-          <option value="2">Caça/Comércio Ilegal de animais</option>
-          <option  value="3">Fumaça/Fuligem/Poeira/Odor - Irregular</option>
-          <option value="4">Descarte de resíduos na água</option>
-          <option value="5">Descarte de resíduos no solo</option>
-          <option value="6">Descarte irregular de entulhos/Caçambeiros</option>
-          <option value="7">Ruído/Vibração Industrial</option>
-          <option value="8">Limpeza de pasto com fogo </option>
-          <option value="9">Queimada de palha com fogo</option>
-          <option value="10">Fabricação, venda ou soltura de Balões</option>
-          </select>
-          <br/>            
-          </form>
-          
-          
+
+<label htmlFor="labelproblema">Selecione um Item para Denúncia</label>
+<br/>
+
+<select defaultValue="0"> 
+        <option value="0" disabled>Escolha uma opção ...</option>
+  
+<option value="1">Desmatamento/Extração Irregular</option>
+<option value="2">Caça/Comércio Ilegal de animais</option>
+<option  value="3">Fumaça/Fuligem/Poeira/Odor - Irregular</option>
+<option value="4">Descarte de resíduos na água</option>
+<option value="5">Descarte de resíduos no solo</option>
+<option value="6">Descarte irregular de entulhos/Caçambeiros</option>
+<option value="7">Ruído/Vibração Industrial</option>
+<option value="8">Limpeza de pasto com fogo </option>
+<option value="9">Queimada de palha com fogo</option>
+<option value="10">Fabricação, venda ou soltura de Balões</option>
+</select>
+<br/>            
+</form>
+
+
+
             </div>
           </InfoWindow>
         ) : null}
@@ -185,9 +254,9 @@ function Search({ panTo }) {
     setValue,
     clearSuggestions,
   } = usePlacesAutocomplete({
-    requestOptions: {
+    requestOptions: {      
       location: { lat: () => -22.578786, lng: () => -47.4845106 },
-      radius: 100 * 1000,
+      radius: 50 * 1000,
     },
   });
 
